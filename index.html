@@ -225,6 +225,7 @@
    File → Share → Publish to web → Pickups tab → CSV → copy link.
    ============================================================ */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3drKIOai9L0T_NsHbnkrvDazJq2Ukwlgi8GQwIzqA3vxzoMoBY5zPPOa2tyoh9cN50IpWJMU4jTFs/pub?gid=2039166136&single=true&output=csv";
+
 /* ---- column header names as they appear in your sheet ---- */
 const COL = {
   pickup:   "Pickup Date",
@@ -319,6 +320,19 @@ function fmtTime(s){
   return {hm:`${h}:${min}`, ap};
 }
 
+/* convert a tip-time string to minutes-since-midnight for correct sorting */
+function timeMinutes(s){
+  if(!s) return 99999;
+  s=s.trim();
+  let m=s.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?/);
+  if(!m) return 99999;
+  let h=+m[1], min=+m[2], ap=(m[3]||"").toUpperCase();
+  if(ap==="AM"){ if(h===12) h=0; }
+  else if(ap==="PM"){ if(h!==12) h+=12; }
+  // no am/pm → already 24h
+  return h*60+min;
+}
+
 function commodityClass(c){
   c=(c||"").toLowerCase();
   if(c.includes("oat"))return"b-oats";
@@ -410,7 +424,7 @@ function paint(){
   }else{
     jobs.sort((a,b)=>{
       if(dayKey(a._d)!==dayKey(b._d))return a._d-b._d;
-      return (a[COL.tipTime]||"").localeCompare(b[COL.tipTime]||"",undefined,{numeric:true});
+      return timeMinutes(a[COL.tipTime]) - timeMinutes(b[COL.tipTime]);
     });
     const groups=[];let cur=null;
     jobs.forEach(j=>{const k=dayKey(j._d); if(!cur||cur.k!==k){cur={k,d:j._d,items:[]};groups.push(cur);} cur.items.push(j);});
