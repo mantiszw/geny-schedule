@@ -17,9 +17,12 @@
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
     --wheat:#c08a1a;
-    --barley:#a8751f;
+    --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
+    --lupins:#c0392b;
+    --faba:#5aa9e0;
+    --lentils:#e8a24a;
     --new:#2f9e57;
     --tbc:#cf7626;
     --cancel:#c43d3d;
@@ -150,6 +153,9 @@
   .b-barley{background:var(--barley)}
   .b-canola{background:var(--canola);color:#fff}
   .b-peas{background:var(--peas);color:#fff}
+  .b-lupins{background:var(--lupins);color:#fff}
+  .b-faba{background:var(--faba);color:#fff}
+  .b-lentils{background:var(--lentils);color:#14110d}
   .b-other{background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line)}
 
   .meta{margin-top:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -340,6 +346,9 @@ function commodityClass(c){
   if(c.includes("barley"))return"b-barley";
   if(c.includes("canola"))return"b-canola";
   if(c.includes("pea"))return"b-peas";
+  if(c.includes("lupin"))return"b-lupins";
+  if(c.includes("faba")||c.includes("fava"))return"b-faba";
+  if(c.includes("lentil"))return"b-lentils";
   return"b-other";
 }
 function statusClass(s){
