@@ -16,7 +16,7 @@
     --gold:#b8860b;
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
-    --wheat:#ffd633;
+    --wheat:#c08a1a;
     --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
@@ -205,7 +205,7 @@
   .actions{margin-top:10px;display:flex;gap:8px}
   .act{
     flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
-    text-decoration:none;
+    text-decoration:none;position:relative;
     font-size:12.5px;font-weight:700;
     padding:8px 10px;border-radius:9px;
     background:var(--panel-2);border:1px solid var(--line);color:var(--ink-dim);
@@ -215,6 +215,14 @@
   .act.call{color:var(--gold-soft)}
   .act.maps{color:var(--ink)}
   .act.note{color:var(--ink-dim)}
+  .note-badge{
+    position:absolute;top:-7px;right:-7px;
+    min-width:20px;height:20px;padding:0 5px;
+    background:var(--tbc);color:#fff;
+    font-size:11px;font-weight:800;
+    border-radius:20px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.2);
+  }
 
   /* states */
   .state{padding:60px 30px;text-align:center;color:var(--ink-faint)}
@@ -548,20 +556,15 @@ function paint(){
         if(maps && /^https?:\/\//i.test(maps)){
           actions+=`<a class="act maps" href="${maps}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Maps</a>`;
         }
-        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Add note</a>`;
-        if(actions) actions=`<div class="actions">${actions}</div>`;
-
-        // matched notes for this job (inline)
-        let notesBlock="";
+        // count matched notes for this job
         const jkey=jobKey(jobDesc(j));
         const jNotes=NOTES_BY_JOB[jkey];
-        if(jNotes && jNotes.length){
-          const items=jNotes.map(n=>{
-            const who=n.driver?`<span class="note-who">${escapeHtml(n.driver)}:</span> `:"";
-            return `<div class="note-item">${who}${escapeHtml(n.note)}</div>`;
-          }).join("");
-          notesBlock=`<div class="notes-block"><div class="notes-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Notes (${jNotes.length})</div>${items}</div>`;
-        }
+        const noteCount=jNotes?jNotes.length:0;
+        const noteBadge=noteCount?`<span class="note-badge">${noteCount}</span>`:"";
+        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Note${noteBadge}</a>`;
+        if(actions) actions=`<div class="actions">${actions}</div>`;
+
+        const notesBlock="";
 
         // destination ribbon (only when Destination has a value)
         let destRibbon="";
