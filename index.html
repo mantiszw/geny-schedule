@@ -118,7 +118,7 @@
   .driver-tag{
     display:inline-flex;align-items:center;gap:5px;
     font-size:11.5px;font-weight:800;letter-spacing:0.02em;
-    padding:3px 10px;border-radius:7px;margin-top:8px;
+    padding:3px 10px;border-radius:7px;
     background:var(--ink);color:var(--bg);
   }
   .driver-tag svg{width:12px;height:12px}
@@ -143,14 +143,13 @@
 
   .job-main{min-width:0}
   .site-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .dest-ribbon{
-    margin-top:6px;
-    display:block;text-align:center;
-    font-size:9.5px;font-weight:800;letter-spacing:0.02em;line-height:1.15;
-    padding:4px 6px;border-radius:8px;
-    color:#fff;
-    max-width:76px;word-break:break-word;
+  .tag-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .dest-pill{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;
+    padding:3px 10px 3px 8px;border-radius:7px;color:#fff;white-space:nowrap;
   }
+  .dest-pill svg{width:12px;height:12px;flex-shrink:0}
   .site{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .badge{
     flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
@@ -524,22 +523,24 @@ function paint(){
         // destination ribbon (only when Destination has a value)
         let destRibbon="";
         if(dest){
-          destRibbon=`<div class="dest-ribbon" style="background:${destColor(dest)}">${escapeHtml(dest)}</div>`;
+          destRibbon=`<span class="dest-pill" style="background:${destColor(dest)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>${escapeHtml(dest)}</span>`;
         }
 
         html+=`<div class="job${isNextDay?" nextday":""}">
-          <div class="time"><div class="hm">${t.hm}</div><div class="ap">${t.ap}</div>${tipFlagTime}${destRibbon}</div>
+          <div class="time"><div class="hm">${t.hm}</div><div class="ap">${t.ap}</div>${tipFlagTime}</div>
           <div class="job-main">
             <div class="site-row">
               <span class="site">${escapeHtml(site)}</span>
               ${comm?`<span class="badge ${commodityClass(comm)}">${escapeHtml(comm)}</span>`:""}
             </div>
-            ${dest?`<div class="dest-ribbon" style="--dc:${destColor(dest)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18"/><path d="M3 4h13l-2 4 2 4H3"/></svg>${escapeHtml(dest)}</div>`:""}
             ${release?`<div class="release">${escapeHtml(release)}</div>`:""}
             <div class="meta">
               ${status?`<span class="status ${sc}">${escapeHtml(status)}</span>`:""}
             </div>
-            ${drvTag}
+            <div class="tag-row">
+              ${drvTag}
+              ${destRibbon}
+            </div>
             ${actions}
           </div>
         </div>`;
