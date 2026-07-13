@@ -16,7 +16,7 @@
     --gold:#b8860b;
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
-    --wheat:#c08a1a;
+    --wheat:#ffd633;
     --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
@@ -339,6 +339,13 @@ function timeMinutes(s){
   return h*60+min;
 }
 
+/* 0 = tips same day as pickup, 1 = tips a later day (next-day) */
+function tipRank(j){
+  const tipD=parseDate(j[COL.tipDate]);
+  if(tipD && j._d && dayKey(tipD)!==dayKey(j._d)) return 1;
+  return 0;
+}
+
 function commodityClass(c){
   c=(c||"").toLowerCase();
   if(c.includes("oat"))return"b-oats";
@@ -433,6 +440,9 @@ function paint(){
   }else{
     jobs.sort((a,b)=>{
       if(dayKey(a._d)!==dayKey(b._d))return a._d-b._d;
+      // same-day tips first, then next-day (later) tips
+      const ra=tipRank(a), rb=tipRank(b);
+      if(ra!==rb) return ra-rb;
       return timeMinutes(a[COL.tipTime]) - timeMinutes(b[COL.tipTime]);
     });
     const groups=[];let cur=null;
