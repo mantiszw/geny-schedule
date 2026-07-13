@@ -16,7 +16,7 @@
     --gold:#b8860b;
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
-    --wheat:#ffd633;
+    --wheat:#c08a1a;
     --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
@@ -146,6 +146,21 @@
   .job-main{min-width:0}
   .site-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .tag-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .notes-block{
+    margin-top:10px;background:#fdf6ec;border:1px solid #e8c9a0;
+    border-radius:10px;padding:9px 11px;
+  }
+  .notes-head{
+    font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;
+    color:#b06d1a;margin-bottom:6px;display:flex;align-items:center;gap:5px;
+  }
+  .notes-head svg{width:13px;height:13px}
+  .note-item{
+    font-size:12.5px;color:#4a3f2a;line-height:1.5;padding:4px 0;
+    border-top:1px solid #f0e0c8;
+  }
+  .note-item:first-of-type{border-top:none}
+  .note-who{font-weight:700;color:#8a5a1e}
   .dest-pill{
     display:inline-flex;align-items:center;gap:4px;
     font-size:11px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;
@@ -281,13 +296,27 @@ const FORM = {
   job:    "entry.804915953",
   driver: "entry.823154617",
 };
-function noteLink(job){
-  const jobDesc=[job._d?dayLabel(job._d):"", fmtTime(job[COL.tipTime]).hm+" "+fmtTime(job[COL.tipTime]).ap,
-                 (job[COL.site]||"").trim(), (job[COL.release]||"").trim()]
-                 .filter(Boolean).join(" · ");
-  const drv=(job[COL.driver]||"").trim();
-  return `${FORM.base}&${FORM.job}=${encodeURIComponent(jobDesc)}&${FORM.driver}=${encodeURIComponent(drv)}`;
+/* published CSV of the form-responses sheet (for showing notes on cards) */
+const NOTES_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7FQlTk5LjblzbPZFe0jkTCikJGCujSG4jG6xRsh4uSKhbL9zzwpWrFRhhoru3HupaGaX-eYnuxFd3/pub?gid=727852859&single=true&output=csv";
+/* responses sheet column names (from the Google Form questions) */
+const NOTE_COL = { job:"Job", driver:"Driver", note:"Note", ts:"Timestamp" };
+
+/* the exact Job string the Note button pre-fills — also used to match notes back to jobs */
+function jobDesc(job){
+  return [job._d?dayLabel(job._d):"", fmtTime(job[COL.tipTime]).hm+" "+fmtTime(job[COL.tipTime]).ap,
+          (job[COL.site]||"").trim(), (job[COL.release]||"").trim()]
+          .filter(Boolean).join(" · ");
 }
+/* normalise for matching (ignore case/spacing differences) */
+function jobKey(s){ return (s||"").toLowerCase().replace(/\s+/g," ").trim(); }
+
+function noteLink(job){
+  const drv=(job[COL.driver]||"").trim();
+  return `${FORM.base}&${FORM.job}=${encodeURIComponent(jobDesc(job))}&${FORM.driver}=${encodeURIComponent(drv)}`;
+}
+
+/* notes grouped by job key, filled after the responses CSV loads */
+let NOTES_BY_JOB = {};
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const WDAYS  = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -519,8 +548,20 @@ function paint(){
         if(maps && /^https?:\/\//i.test(maps)){
           actions+=`<a class="act maps" href="${maps}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Maps</a>`;
         }
-        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Note</a>`;
+        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Add note</a>`;
         if(actions) actions=`<div class="actions">${actions}</div>`;
+
+        // matched notes for this job (inline)
+        let notesBlock="";
+        const jkey=jobKey(jobDesc(j));
+        const jNotes=NOTES_BY_JOB[jkey];
+        if(jNotes && jNotes.length){
+          const items=jNotes.map(n=>{
+            const who=n.driver?`<span class="note-who">${escapeHtml(n.driver)}:</span> `:"";
+            return `<div class="note-item">${who}${escapeHtml(n.note)}</div>`;
+          }).join("");
+          notesBlock=`<div class="notes-block"><div class="notes-head"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Notes (${jNotes.length})</div>${items}</div>`;
+        }
 
         // destination ribbon (only when Destination has a value)
         let destRibbon="";
@@ -543,6 +584,7 @@ function paint(){
               ${drvTag}
               ${destRibbon}
             </div>
+            ${notesBlock}
             ${actions}
           </div>
         </div>`;
@@ -569,14 +611,38 @@ function recordsFromCSV(text){
   });
 }
 
+async function loadNotes(){
+  if(!NOTES_CSV || NOTES_CSV.includes("PASTE_")) return;
+  try{
+    const res=await fetch(NOTES_CSV+(NOTES_CSV.includes("?")?"&":"?")+"_cb="+Date.now());
+    if(!res.ok) return;
+    const recs=recordsFromCSV(await res.text());
+    const map={};
+    recs.forEach(r=>{
+      const k=jobKey(r[NOTE_COL.job]);
+      if(!k) return;
+      (map[k]=map[k]||[]).push({
+        driver:(r[NOTE_COL.driver]||"").trim(),
+        note:(r[NOTE_COL.note]||"").trim(),
+        ts:(r[NOTE_COL.ts]||"").trim()
+      });
+    });
+    // keep only rows that actually have note text
+    Object.keys(map).forEach(k=>{ map[k]=map[k].filter(n=>n.note); if(!map[k].length) delete map[k]; });
+    NOTES_BY_JOB=map;
+  }catch(e){ /* notes are best-effort; ignore failures */ }
+}
+
 async function load(){
   if(CSV_URL.includes("PASTE_YOUR")){
     // demo mode
+    await loadNotes();
     render(DEMO);
     document.getElementById("updated").textContent="Demo preview — live data not connected yet";
     return;
   }
   try{
+    await loadNotes(); // notes first so cards can show them
     const res=await fetch(CSV_URL+ (CSV_URL.includes("?")?"&":"?") +"_cb="+Date.now());
     if(!res.ok)throw new Error(res.status);
     const text=await res.text();
