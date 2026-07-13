@@ -16,7 +16,7 @@
     --gold:#b8860b;
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
-    --wheat:#ffd633;
+    --wheat:#c08a1a;
     --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
@@ -143,6 +143,14 @@
 
   .job-main{min-width:0}
   .site-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .dest-ribbon{
+    margin-top:6px;
+    display:block;text-align:center;
+    font-size:9.5px;font-weight:800;letter-spacing:0.02em;line-height:1.15;
+    padding:4px 6px;border-radius:8px;
+    color:#fff;
+    max-width:76px;word-break:break-word;
+  }
   .site{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-0.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .badge{
     flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
@@ -244,7 +252,27 @@ const COL = {
   driver:   "Driver",
   phone:    "Grower Phone",
   maps:     "Maps Link",
+  destination:      "Destination",
+  otherDestination: "Other Destination",
 };
+
+/* ---- destination ribbon colours (add your destinations here) ---- */
+const DEST_COLORS = {
+  "advanced": "#e67e22",        // orange
+  "wesfeeds": "#c2185b",        // pink
+  // DG depots — teal/green family so they read as a group
+  "dg pingelly":    "#00897b",  // teal
+  "dg williams":    "#43a047",  // green
+  "dg wagin":       "#00acc1",  // cyan
+  "dg newdegate":   "#7cb342",  // lime
+  "dg gowangerup":  "#26a69a",  // sea green
+  "dg gnowangerup": "#26a69a",  // (alt spelling — same colour)
+  "dg albany":      "#2e7d32",  // dark green
+};
+function destColor(name){
+  const key=(name||"").trim().toLowerCase();
+  return DEST_COLORS[key] || "#546e7a"; // fallback slate for any unlisted destination
+}
 
 /* ---- Google Form for driver notes (pre-fill) ---- */
 const FORM = {
@@ -461,6 +489,12 @@ function paint(){
         const phone=(j[COL.phone]||"").trim();
         const maps=(j[COL.maps]||"").trim();
         const release=(j[COL.release]||"").trim();
+        let dest=(j[COL.destination]||"").trim();
+        // if Destination is "Other", use the Other Destination text
+        if(dest.toLowerCase()==="other"){
+          const other=(j[COL.otherDestination]||"").trim();
+          if(other) dest=other;
+        }
         const drv=driverName(j);
         const sc=statusClass(status);
 
@@ -487,13 +521,20 @@ function paint(){
         actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Note</a>`;
         if(actions) actions=`<div class="actions">${actions}</div>`;
 
+        // destination ribbon (only when Destination has a value)
+        let destRibbon="";
+        if(dest){
+          destRibbon=`<div class="dest-ribbon" style="background:${destColor(dest)}">${escapeHtml(dest)}</div>`;
+        }
+
         html+=`<div class="job${isNextDay?" nextday":""}">
-          <div class="time"><div class="hm">${t.hm}</div><div class="ap">${t.ap}</div>${tipFlagTime}</div>
+          <div class="time"><div class="hm">${t.hm}</div><div class="ap">${t.ap}</div>${tipFlagTime}${destRibbon}</div>
           <div class="job-main">
             <div class="site-row">
               <span class="site">${escapeHtml(site)}</span>
               ${comm?`<span class="badge ${commodityClass(comm)}">${escapeHtml(comm)}</span>`:""}
             </div>
+            ${dest?`<div class="dest-ribbon" style="--dc:${destColor(dest)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18"/><path d="M3 4h13l-2 4 2 4H3"/></svg>${escapeHtml(dest)}</div>`:""}
             ${release?`<div class="release">${escapeHtml(release)}</div>`:""}
             <div class="meta">
               ${status?`<span class="status ${sc}">${escapeHtml(status)}</span>`:""}
