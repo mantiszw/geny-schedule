@@ -16,7 +16,7 @@
     --gold:#b8860b;
     --gold-soft:#9a6e08;
     --oats:#6b4ce8;
-    --wheat:#c08a1a;
+    --wheat:#ffd633;
     --barley:#2d6cdf;
     --canola:#525c68;
     --peas:#4a8c4a;
@@ -202,7 +202,8 @@
   .s-tbc{color:var(--tbc);border-color:rgba(224,138,60,.4);background:rgba(224,138,60,.08)}
   .s-cancel{color:var(--cancel);border-color:rgba(214,81,81,.4);background:rgba(214,81,81,.08);text-decoration:line-through}
 
-  .actions{margin-top:10px;display:flex;gap:8px}
+  .actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+  .actions .act{flex:1 1 calc(50% - 4px);min-width:90px}
   .act{
     flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
     text-decoration:none;position:relative;
@@ -223,6 +224,9 @@
     border-radius:20px;display:flex;align-items:center;justify-content:center;
     box-shadow:0 1px 3px rgba(0,0,0,.2);
   }
+  .notes-toggle{cursor:pointer;font-family:inherit;color:var(--tbc)}
+  .notes-toggle.open{background:var(--tbc);border-color:var(--tbc);color:#fff}
+  .notes-toggle.open .note-badge{background:#fff;color:var(--tbc)}
 
   /* states */
   .state{padding:60px 30px;text-align:center;color:var(--ink-faint)}
@@ -560,11 +564,25 @@ function paint(){
         const jkey=jobKey(jobDesc(j));
         const jNotes=NOTES_BY_JOB[jkey];
         const noteCount=jNotes?jNotes.length:0;
-        const noteBadge=noteCount?`<span class="note-badge">${noteCount}</span>`:"";
-        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Note${noteBadge}</a>`;
+        const noteUid="n"+Math.random().toString(36).slice(2,9);
+
+        // "View notes (N)" toggle button (only if notes exist)
+        if(noteCount){
+          actions+=`<button class="act notes-toggle" type="button" onclick="toggleNotes('${noteUid}',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Notes<span class="note-badge">${noteCount}</span></button>`;
+        }
+        // "Add note" always available
+        actions+=`<a class="act note" href="${noteLink(j)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add note</a>`;
         if(actions) actions=`<div class="actions">${actions}</div>`;
 
-        const notesBlock="";
+        // collapsible notes panel (hidden until toggled)
+        let notesBlock="";
+        if(noteCount){
+          const items=jNotes.map(n=>{
+            const who=n.driver?`<span class="note-who">${escapeHtml(n.driver)}:</span> `:"";
+            return `<div class="note-item">${who}${escapeHtml(n.note)}</div>`;
+          }).join("");
+          notesBlock=`<div class="notes-block" id="${noteUid}" style="display:none">${items}</div>`;
+        }
 
         // destination ribbon (only when Destination has a value)
         let destRibbon="";
@@ -587,8 +605,8 @@ function paint(){
               ${drvTag}
               ${destRibbon}
             </div>
-            ${notesBlock}
             ${actions}
+            ${notesBlock}
           </div>
         </div>`;
       });
@@ -612,6 +630,15 @@ function recordsFromCSV(text){
   return rows.slice(1).map(r=>{
     const o={};head.forEach((h,i)=>o[h]=(r[i]||"").trim());return o;
   });
+}
+
+/* expand/collapse a job's notes panel */
+function toggleNotes(id, btn){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const open=el.style.display!=="none";
+  el.style.display=open?"none":"block";
+  if(btn) btn.classList.toggle("open", !open);
 }
 
 async function loadNotes(){
